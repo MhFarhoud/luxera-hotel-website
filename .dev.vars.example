@@ -1,0 +1,3 @@
+ADMIN_USERNAME=luxera-admin
+ADMIN_PASSWORD_HASH=replace-with-salt-colon-pbkdf2-hash
+ADMIN_SESSION_SECRET=replace-with-random-hex-secret-at-least-32-characters
