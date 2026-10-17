@@ -10,12 +10,9 @@ if (-not (Test-Path (Join-Path $nodeDir 'node.exe'))) {
 }
 $env:Path = "$nodeDir;$env:Path"
 if (-not (Test-Path '.env.vps')) {
-  $alphabet = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  $password = -join (1..28 | ForEach-Object { $alphabet[(Get-Random -Maximum $alphabet.Length)] })
-  $salt = New-Object byte[] 16; [Security.Cryptography.RandomNumberGenerator]::Fill($salt)
-  $secret = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Fill($secret)
-  $derived = [Security.Cryptography.Rfc2898DeriveBytes]::Pbkdf2($password, $salt, 210000, [Security.Cryptography.HashAlgorithmName]::SHA256, 32)
-  "ADMIN_USERNAME=luxera-admin`nADMIN_PASSWORD_HASH=$([Convert]::ToHexString($salt).ToLowerInvariant()):$([Convert]::ToHexString($derived).ToLowerInvariant())`nADMIN_SESSION_SECRET=$([Convert]::ToHexString($secret).ToLowerInvariant())" | Set-Content -Encoding ascii '.env.vps'
+  $creds = & (Join-Path $nodeDir 'node.exe') -e "const c=require('crypto');const p=c.randomBytes(24).toString('base64url');const s=c.randomBytes(16);console.log(JSON.stringify({password:p,hash:s.toString('hex')+':'+c.pbkdf2Sync(p,s,210000,32,'sha256').toString('hex'),secret:c.randomBytes(32).toString('hex')}))" | ConvertFrom-Json
+  $password = $creds.password
+  "ADMIN_USERNAME=luxera-admin`nADMIN_PASSWORD_HASH=$($creds.hash)`nADMIN_SESSION_SECRET=$($creds.secret)" | Set-Content -Encoding ascii '.env.vps'
   Write-Host "Admin username: luxera-admin"
   Write-Host "Admin password: $password"
   Write-Host 'رمز را اکنون ذخیره کنید؛ فقط همین بار نمایش داده می‌شود.'
